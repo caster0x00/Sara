@@ -46,6 +46,12 @@ This tool is written in Python 3 and uses regular expressions to look for specif
 
 To install Sara:
 
+1. Kali Linux
+```bash
+caster@kali:~$ sudo apt update && sudo apt install sara
+caster@kali:~$ sara -h
+```
+2. Via Python3
 ```bash
 caster@kali:~$ sudo apt install python3-colorama git
 caster@kali:~$ git clone https://github.com/casterbyte/Sara
