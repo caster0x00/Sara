@@ -75,7 +75,13 @@ usage: sara [-h] --config-file CONFIG_FILE
 sara: error: the following arguments are required: --config-file
 ```
 
-Sara uses just one argument, it is the name/path to the RouterOS configuration file. The tool supports `.rsc` files.
+Sara uses just one argument, it is the name/path to the RouterOS configuration file. The tool supports `.rsc` files. You can generate `.rsc` file with the `export verbose file=routeros.rsc` command on the mikrotik terminal.
+
+# Docker
+
+Use the following command to run sara with your exported `routeros.rsc` file.
+
+    docker run -v path/to/routeros.rsc:/config/routeros.rsc ghcr.io/casterbyte/sara:main
 
 # Work Example
 
