@@ -1,4 +1,4 @@
-# Sara: RouterOS Security Inspector
+# Sara: RouterOS Security Inspector (A new version is on the way)
 
 It is a autonomous RouterOS configuration analyzer for finding security issues on MikroTik hardware.
 
