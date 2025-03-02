@@ -53,7 +53,7 @@ Sara does not use any exploits, payloads or bruteforce attacks. All RouterOS sec
 
 3. **Wi-Fi Security Check** – determines whether WPS and PMKID support are enabled, which can be used in WPA2-PSK attacks;
 
-   > At the moment, this check has minor stability issues, as different versions of RouterOS have different variations of Wi-Fi configurations. Keep that in mind, but feel free to make an issue, we'll look into it.s
+   > At the moment, this check has minor stability issues, as different versions of RouterOS have different variations of Wi-Fi configurations. Keep that in mind, but feel free to make an issue, we'll look into it;
 
 4. **Check UPnP** – determines whether UPnP is enabled, which can automatically forward ports and threaten network security;
 
