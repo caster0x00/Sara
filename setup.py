@@ -8,7 +8,7 @@ setup(
     author_email="caster@exploit.org",
     scripts=['sara.py'],
     description="RouterOS Security Inspector",
-    long_description=open('README.md').read(),
+    long_description=open('README.md', encoding="utf8").read(),
     long_description_content_type='text/markdown',
     license="Apache-2.0",
     keywords=['mikrotik', 'routeros', 'config analyzer', 'network security',],
