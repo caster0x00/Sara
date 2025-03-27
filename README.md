@@ -8,7 +8,7 @@ RouterOS configuration analyzer to find security misconfigurations and vulnerabi
 RouterOS Security Inspector. For security engineers
 Operates remotely using SSH, designed to evaluate RouterOS security
 
-Author: Magama Bazarov, <caster@exploit.org>
+Author: Magama Bazarov, <magamabazarov@mailbox.org>
 Alias: Caster
 Version: 1.1
 Codename: Judge
@@ -351,8 +351,6 @@ caster@kali:~$ python3 sara.py --ip 192.168.88.1 --username admin --password myp
 
 [*] Disconnected from RouterOS (192.168.88.1:22)
 [*] All checks have been completed. Security inspection completed in 3.03 seconds
-
-[*] Remember: Security is a process, not a state.
 ```
 
 # Copyright
@@ -363,4 +361,4 @@ Copyright (c) 2025 Magama Bazarov. This project is licensed under the Apache 2.0
 
 MikroTik devices are widely used around the world. Sara is designed to help engineers improve security - use it wisely.
 
-E-mail for contact: caster@exploit.org
+E-mail for contact: magamabazarov@mailbox.org

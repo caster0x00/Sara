@@ -5,7 +5,7 @@ setup(
     version="1.1",
     url="https://github.com/casterbyte/Sara",
     author="Magama Bazarov",
-    author_email="caster@exploit.org",
+    author_email="magamabazarov@mailbox.org",
     scripts=['sara.py'],
     description="RouterOS Security Inspector",
     long_description=open('README.md', encoding="utf8").read(),

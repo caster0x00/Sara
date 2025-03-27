@@ -30,7 +30,7 @@ def banner():
     print(banner_text)
     print("    " + Fore.YELLOW + "RouterOS Security Inspector. For security engineers")
     print("    " + Fore.YELLOW + "Operates remotely using SSH, designed to evaluate RouterOS security\n")
-    print("    " + Fore.YELLOW + "Author: " + Style.RESET_ALL + "Magama Bazarov, <caster@exploit.org>")
+    print("    " + Fore.YELLOW + "Author: " + Style.RESET_ALL + "Magama Bazarov, <magamabazarov@mailbox.org>")
     print("    " + Fore.YELLOW + "Alias: " + Style.RESET_ALL + "Caster")
     print("    " + Fore.YELLOW + "Version: " + Style.RESET_ALL + "1.1")
     print("    " + Fore.YELLOW + "Codename: " + Style.RESET_ALL + "Judge")
