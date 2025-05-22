@@ -2,6 +2,8 @@
 # Downloaded and adapted from: https://cve.mitre.org/data/downloads
 # The CVE search thanks to this module is passive and does not involve sending various payloads, launching exploits and so on
 
+# UPD: It's not the best realization at this point. I need to use the NIST NVD database without having to hardcode CVEs. This was not the best solution.
+
 cve_routeros_database = {
     "CVE-2008-0680": "SNMPd in MikroTik RouterOS 3.2 and earlier allows remote attackers to cause a denial of service (daemon crash) via a crafted SNMP SET request.",
     "CVE-2008-6976": "MikroTik RouterOS 3.x through 3.13 and 2.x through 2.9.51 allows remote attackers to modify Network Management System (NMS) settings via a crafted SNMP set request.",

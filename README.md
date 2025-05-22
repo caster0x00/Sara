@@ -10,7 +10,7 @@ Operates remotely using SSH, designed to evaluate RouterOS security
 
 Author: Magama Bazarov, <magamabazarov@mailbox.org>
 Alias: Caster
-Version: 1.1
+Version: 1.1.1
 Codename: Judge
 ```
 

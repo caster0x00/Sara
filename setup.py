@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="sara",
-    version="1.1",
+    version="1.1.1",
     url="https://github.com/casterbyte/Sara",
     author="Magama Bazarov",
     author_email="magamabazarov@mailbox.org",

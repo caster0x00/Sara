@@ -32,7 +32,7 @@ def banner():
     print("    " + Fore.YELLOW + "Operates remotely using SSH, designed to evaluate RouterOS security\n")
     print("    " + Fore.YELLOW + "Author: " + Style.RESET_ALL + "Magama Bazarov, <magamabazarov@mailbox.org>")
     print("    " + Fore.YELLOW + "Alias: " + Style.RESET_ALL + "Caster")
-    print("    " + Fore.YELLOW + "Version: " + Style.RESET_ALL + "1.1")
+    print("    " + Fore.YELLOW + "Version: " + Style.RESET_ALL + "1.1.0")
     print("    " + Fore.YELLOW + "Codename: " + Style.RESET_ALL + "Judge")
     print("    " + Fore.YELLOW + "Documentation & Usage: " + Style.RESET_ALL + "https://github.com/casterbyte/Sara")
     print()
@@ -63,7 +63,7 @@ def connect_to_router(ip, username, password, port):
 
 # Print a visual separator for better readability in the output
 def separator(title):
-    print(Fore.WHITE + Style.BRIGHT + '=' * 40)
+    print(Fore.WHITE + Style.BRIGHT + '=' * 50)
     print(Fore.WHITE + Style.BRIGHT + f"[*] {title}")
 
 def parse_version(version_str):
@@ -93,6 +93,7 @@ def extract_version_from_cve(description):
 
 # Retrieves the RouterOS version and checks for known CVEs
 def check_routeros_version(connection):
+    # Separator outlet
     separator("Checking RouterOS Version")
     command = "/system resource print"
     output = connection.send_command(command)
@@ -134,9 +135,9 @@ def check_routeros_version(connection):
     else:
         print(Fore.RED + Style.BRIGHT + "[-] ERROR: Could not determine RouterOS version.")
 
-
 # Check if SMB service is enabled (potential security risk)
 def check_smb(connection):
+    # Separator outlet
     separator("Checking SMB Service")
     command = "/ip smb print"
     output = connection.send_command(command)
@@ -149,6 +150,7 @@ def check_smb(connection):
        
 # Check for high-risk remote management interfaces (RMI)
 def check_rmi_services(connection):
+    # Separator outlet
     separator("Checking RMI Services")
     command = "/ip service print"
     output = connection.send_command(command)
@@ -199,6 +201,7 @@ def check_rmi_services(connection):
 
 # Check for default usernames that could be security risks
 def check_default_users(connection):
+    # Separator outlet
     separator("Checking Default Usernames")
     command = "/user print detail"
     output = connection.send_command(command)
@@ -218,6 +221,7 @@ def check_default_users(connection):
 
 # Verify whether critical services have restricted network access
 def checking_access_to_RMI(connection):
+    # Separator outlet
     separator("Checking network access to RMI")
     command = "/ip service print detail"
     output = connection.send_command(command)
@@ -246,10 +250,10 @@ def checking_access_to_RMI(connection):
         print(Fore.GREEN + "[+] All services have proper IP restrictions.")
 
 # Analyze Wi-Fi security settings, including WPS and PMKID vulnerabilities
-# I think this is the most unstable feature of the whole Sarah, need more feedback from users to get it perfect
+# I think this is the most unstable feature of the whole Sara, need more feedback from users to get it perfect
 def check_wifi_security(connection):
-    separator("Checking Wi-Fi Security")
-
+    # Separator outlet
+    separator("Checking WLAN Security")
     risks_found = False
     try:
         # Retrieve RouterOS version to determine supported commands
@@ -343,6 +347,7 @@ def check_wifi_security(connection):
 
 # Check if UPnP is enabled
 def check_upnp_status(connection):
+    # Separator outlet
     separator("Checking UPnP Status")
     command = "/ip upnp print"
     output = connection.send_command(command)
@@ -355,6 +360,7 @@ def check_upnp_status(connection):
 
 # Check if the router is acting as a DNS server
 def check_dns_status(connection):
+    # Separator outlet
     separator("Checking DNS Settings")
     command = "/ip dns print"
     output = connection.send_command(command)
@@ -367,6 +373,7 @@ def check_dns_status(connection):
 
 # Check DDNS Settings
 def check_ddns_status(connection):
+    # Separator outlet
     separator("Checking DDNS Settings")
     command = "/ip cloud print"
     output = connection.send_command(command)
@@ -379,6 +386,7 @@ def check_ddns_status(connection):
 
 # Detect active PoE interfaces that might pose a risk to connected devices
 def check_poe_status(connection):
+    # Separator outlet
     separator("Checking PoE Status")
     command = "/interface ethernet print detail"
     output = connection.send_command(command)
@@ -402,6 +410,7 @@ def check_poe_status(connection):
 
 # Checking RouterBOOT
 def check_routerboot_protection(connection):
+    # Separator outlet
     separator("Checking RouterBOOT Protection")
     command = "/system routerboard settings print"
     output = connection.send_command(command)
@@ -425,6 +434,7 @@ def check_socks_status(connection):
 
 # Verify if RouterBOOT protection is enabled to prevent unauthorized firmware modifications
 def check_bandwidth_server_status(connection):
+    # Separator outlet
     separator("Checking Bandwidth Server Status")
     command = "/tool bandwidth-server print"
     output = connection.send_command(command)
@@ -437,6 +447,7 @@ def check_bandwidth_server_status(connection):
 
 # Analyze discovery protocols (CDP, LLDP, MNDP) that might expose network information
 def check_neighbor_discovery(connection):
+    # Separator outlet
     separator("Checking Neighbor Discovery Protocols")
     command = "/ip neighbor discovery-settings print"
     output = connection.send_command(command)
@@ -454,6 +465,7 @@ def check_neighbor_discovery(connection):
 
 # Ensure a minimum password length policy is enforced
 def check_password_length_policy(connection):
+    # Separator outlet
     separator("Checking Password Policy")
     command = "/user settings print"
     output = connection.send_command(command)
@@ -466,6 +478,7 @@ def check_password_length_policy(connection):
 
 # Analyze SSH security settings, including strong encryption and port forwarding risks
 def check_ssh_security(connection):
+    # Separator outlet
     separator("Checking SSH Security")
     command = "/ip ssh print"
     output = connection.send_command(command)
@@ -483,6 +496,7 @@ def check_ssh_security(connection):
 
 # Check if connection tracking is enabled, which may impact performance
 def check_connection_tracking(connection):
+    # Separator outlet
     separator("Checking Connection Tracking")
     command = "/ip firewall connection tracking print"
     output = connection.send_command(command)
@@ -496,6 +510,7 @@ def check_connection_tracking(connection):
 
 # Verify if RoMON is enabled, which might expose Layer 2 management access
 def check_romon_status(connection):
+    # Separator outlet
     separator("Checking RoMON Status")
     command = "/tool romon print"
     output = connection.send_command(command)
@@ -509,6 +524,7 @@ def check_romon_status(connection):
 
 # Analyze MAC-based Winbox access settings
 def check_mac_winbox_security(connection):
+    # Separator outlet
     separator("Checking Winbox MAC Server Settings")
 
     # MAC-Winbox Server
@@ -537,6 +553,7 @@ def check_mac_winbox_security(connection):
 
 # Check for weak SNMP community strings that could be exploited
 def check_snmp(connection):
+    # Separator outlet
     separator("Checking SNMP Community Strings")
     command = "/snmp community print"
     output = connection.send_command(command)
@@ -558,6 +575,7 @@ def check_snmp(connection):
 
 # Detect and analyze firewall NAT rules that could expose internal services
 def check_dst_nat_rules(connection):
+    # Separator outlet
     separator("Checking Firewall NAT Rules")
     command = "/ip firewall nat print"
     output = connection.send_command(command)
@@ -577,6 +595,7 @@ def check_dst_nat_rules(connection):
 
 # Identify potentially malicious scheduled tasks
 def detect_malicious_schedulers(connection):
+    # Separator outlet
     separator("Checking for Malicious Schedulers")
     command = "/system scheduler print detail"
     output = connection.send_command(command)
@@ -645,6 +664,7 @@ def detect_malicious_schedulers(connection):
 
 # Checking DNS Static Entries
 def check_static_dns_entries(connection):
+    # Separator outlet
     separator("Checking Static DNS Entries")
     command = "/ip dns static print detail"
     output = connection.send_command(command)
@@ -673,6 +693,7 @@ def check_static_dns_entries(connection):
 
 # Retrieve router uptime
 def get_router_uptime(connection):
+    # Separator outlet
     separator("Checking Router Uptime")
     command = "/system resource print"
     output = connection.send_command(command)
