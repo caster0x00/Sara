@@ -183,6 +183,7 @@ options:
   --ip IP              The address of your MikroTik router
   --username USERNAME  SSH username (RO account can be used)
   --password PASSWORD  SSH password
+  --skip-confirmation  Skips the confirmation prompt (disclamer: ensure that your are allowed to use this tool)
   --port PORT          SSH port (default: 22)
 ```
 
@@ -194,7 +195,11 @@ options:
 
 3. `--password` - password for SSH authentication;
 
-4. `--port` - allows you to specify a non-standard SSH port for connection. The default is **22**, but if you have changed the SSH port number, it must be specified manually.
+4. `--skip-confirmation` skips the confirmation prompt that asks if you are allowed to use this tool on the target system
+
+    > Please do ensure the legality of what you're doing.
+
+5. `--port` - allows you to specify a non-standard SSH port for connection. The default is **22**, but if you have changed the SSH port number, it must be specified manually.
 
 # Sara's Launch
 
