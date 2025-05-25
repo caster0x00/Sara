@@ -727,6 +727,8 @@ def get_router_uptime(connection):
 def confirm_legal_usage():
     print("    " + "WARNING: This tool is for security auditing of YOUR OWN RouterOS devices.")
     print("    " + "Unauthorized use may be illegal. Proceed responsibly.\n")
+
+def prompt_legal_usage():
     response = input("    " + "Do you wish to proceed? [yes/no]: ").strip()
     
     if response.lower() != "yes":
@@ -745,6 +747,7 @@ def main():
     parser.add_argument("--password", help="SSH password")
     parser.add_argument("--ssh-key", help="SSH key")
     parser.add_argument("--passphrase", help="SSH key passphrase")
+    parser.add_argument("--skip-confirmation", action='store_true', help='Skips the confirmation prompt (disclamer: ensure that your are allowed to use this tool)')
     parser.add_argument("--port", type=int, default=22, help="SSH port (default: 22)")
     args = parser.parse_args()
 
@@ -774,6 +777,8 @@ def main():
     
 
     confirm_legal_usage()
+    if not args.skip_confirmation:
+        prompt_legal_usage()
 
     # Start timer
     start_time = time.time()
