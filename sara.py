@@ -743,7 +743,7 @@ def main():
     parser.add_argument("--ip", help="The address of your MikroTik router")
     parser.add_argument("--username", help="SSH username (RO account can be used)")
     parser.add_argument("--password", help="SSH password")
-    parser.add_argument("--skip-confirmation", action='store_true', type=bool, help='Skips the confirmation prompt (disclamer: ensure that your are allowed to use this tool)')
+    parser.add_argument("--skip-confirmation", action='store_true', help='Skips the confirmation prompt (disclamer: ensure that your are allowed to use this tool)')
     parser.add_argument("--port", type=int, default=22, help="SSH port (default: 22)")
     args = parser.parse_args()
 
