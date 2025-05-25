@@ -44,7 +44,7 @@ def banner():
     print()
 
 # Establish SSH connection to the RouterOS device using Netmiko
-def connect_to_router(ip, username, password, port, key_file):
+def connect_to_router(ip, username, password, port, key_file, passphrase):
     device = {
         "device_type": "mikrotik_routeros",
         "host": ip,
@@ -52,6 +52,7 @@ def connect_to_router(ip, username, password, port, key_file):
         "password": password,
         "port": port,
         "key_file": key_file,
+        "passphrase": passphrase,
     }
     try:
         print(Fore.GREEN + Style.BRIGHT + f"[*] Connecting to RouterOS at {ip}:{port}")
@@ -743,6 +744,7 @@ def main():
     parser.add_argument("--username", help="SSH username (RO account can be used)")
     parser.add_argument("--password", help="SSH password")
     parser.add_argument("--ssh-key", help="SSH key")
+    parser.add_argument("--passphrase", help="SSH key passphrase")
     parser.add_argument("--port", type=int, default=22, help="SSH port (default: 22)")
     args = parser.parse_args()
 
@@ -764,7 +766,12 @@ def main():
         print(Fore.YELLOW + Style.BRIGHT + "[!] ERROR: Can't use both password & ssh_key authentication")
         print(Fore.YELLOW + "[!] Use 'sara --help' for more information")
         sys.exit(1)
-        
+    
+    if args.passphrase and not args.ssh_key:
+        print(Fore.YELLOW + Style.BRIGHT + "[!] ERROR: The passphrase argument can't be used when not specifying a ssh_key")
+        print(Fore.YELLOW + "[!] Use 'sara --help' for more information")
+        sys.exit(1)
+    
 
     confirm_legal_usage()
 
@@ -772,7 +779,13 @@ def main():
     start_time = time.time()
 
     # Connecting to the router
-    connection = connect_to_router(args.ip, args.username, args.password, args.port, args.ssh_key)
+    connection = connect_to_router(args.ip,
+        args.username,
+        args.password,
+        args.port,
+        args.ssh_key,
+        args.passphrase
+    )
 
     # Execute all implemented security checks in sequence
     check_routeros_version(connection)
