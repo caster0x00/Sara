@@ -176,7 +176,7 @@ caster@kali:~$ sara -h
 Sara supports the following command line options:
 
 ```bash
-usage: sara.py [-h] --ip IP --username USERNAME --password PASSWORD [--port PORT]
+usage: sara.py [-h] [--ip IP] [--username USERNAME] [--password PASSWORD] [--skip-confirmation] [--port PORT]
 
 options:
   -h, --help           show this help message and exit
