@@ -176,14 +176,17 @@ caster@kali:~$ sara -h
 Sara supports the following command line options:
 
 ```bash
-usage: sara.py [-h] --ip IP --username USERNAME --password PASSWORD [--port PORT]
+usage: sara.py [-h] [--ip IP] [--username USERNAME] [--password PASSWORD] [--ssh-key SSH_KEY] [--passphrase PASSPHRASE] [--port PORT]
 
 options:
-  -h, --help           show this help message and exit
-  --ip IP              The address of your MikroTik router
-  --username USERNAME  SSH username (RO account can be used)
-  --password PASSWORD  SSH password
-  --port PORT          SSH port (default: 22)
+  -h, --help            show this help message and exit
+  --ip IP               The address of your MikroTik router
+  --username USERNAME   SSH username (RO account can be used)
+  --password PASSWORD   SSH password
+  --ssh-key SSH_KEY     SSH key
+  --passphrase PASSPHRASE
+                        SSH key passphrase
+  --port PORT           SSH port (default: 22)
 ```
 
 1. `--ip` - this argument specifies the IP address of the MikroTik device to which Sara is connecting;
@@ -194,7 +197,15 @@ options:
 
 3. `--password` - password for SSH authentication;
 
-4. `--port` - allows you to specify a non-standard SSH port for connection. The default is **22**, but if you have changed the SSH port number, it must be specified manually.
+4. `--ssh-key` - specifies the ssh key that should be used to access the RouterOS's shell
+
+    > This is muaually exclusive with `--password`.
+
+5. `--passphrase` - specifies the passphrase used to access the ssh-key
+
+    > This only works when using the `--ssh-key` argument.
+
+6. `--port` - allows you to specify a non-standard SSH port for connection. The default is **22**, but if you have changed the SSH port number, it must be specified manually.
 
 # Sara's Launch
 
