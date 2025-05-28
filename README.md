@@ -176,7 +176,7 @@ caster@kali:~$ sara -h
 Sara supports the following command line options:
 
 ```bash
-usage: sara.py [-h] [--ip IP] [--username USERNAME] [--password PASSWORD] [--ssh-key SSH_KEY] [--passphrase PASSPHRASE] [--port PORT]
+usage: sara.py [-h] [--ip IP] [--username USERNAME] [--password PASSWORD] [--ssh-key SSH_KEY] [--passphrase PASSPHRASE] [--skip-confirmation] [--port PORT]
 
 options:
   -h, --help            show this help message and exit
@@ -186,6 +186,7 @@ options:
   --ssh-key SSH_KEY     SSH key
   --passphrase PASSPHRASE
                         SSH key passphrase
+  --skip-confirmation   Skips the confirmation prompt (disclamer: ensure that your are allowed to use this tool)
   --port PORT           SSH port (default: 22)
 ```
 
@@ -205,7 +206,11 @@ options:
 
     > This only works when using the `--ssh-key` argument.
 
-6. `--port` - allows you to specify a non-standard SSH port for connection. The default is **22**, but if you have changed the SSH port number, it must be specified manually.
+6. `--skip-confirmation` skips the confirmation prompt that asks if you are allowed to use this tool on the target system
+
+    > Please do ensure the legality of what you're doing.
+
+7. `--port` - allows you to specify a non-standard SSH port for connection. The default is **22**, but if you have changed the SSH port number, it must be specified 
 
 # Sara's Launch
 
