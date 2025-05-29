@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="sara",
-    version="1.1.1",
+    version="1.2",
     url="https://github.com/casterbyte/Sara",
     author="Magama Bazarov",
     author_email="magamabazarov@mailbox.org",
@@ -18,7 +18,7 @@ setup(
         'netmiko',
         'packaging',
     ],
-    py_modules=['cve_lookup'],
+    py_modules=['cve_analyzer'],
     entry_points={
         "console_scripts": ["sara = sara:main"],
     },

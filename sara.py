@@ -2,17 +2,13 @@
 
 # Copyright (c) 2025 Magama Bazarov
 # Licensed under the Apache 2.0 License
+# This project is not affiliated with or endorsed by MikroTik
 
-# Connecting required libraries and cve_lookup module
-import argparse
-import colorama
-import time
-import re
-import sys
+import argparse, colorama, time, re, sys
 from netmiko import ConnectHandler
 from colorama import Fore, Style
-from cve_lookup import cve_routeros_database
 from packaging.version import Version
+from cve_analyzer import run_cve_audit
 
 # Initialize colorama for colored console output
 colorama.init(autoreset=True)
@@ -28,14 +24,11 @@ def banner():
 """
     # Display the program banner and metadata
     print(banner_text)
-    print("    " + Fore.YELLOW + "RouterOS Security Inspector. For security engineers")
-    print("    " + Fore.YELLOW + "Operates remotely using SSH, designed to evaluate RouterOS security\n")
+    print("    " + Fore.YELLOW + "RouterOS Security Inspector. Designed for security engineers")
     print("    " + Fore.YELLOW + "Author: " + Style.RESET_ALL + "Magama Bazarov, <magamabazarov@mailbox.org>")
     print("    " + Fore.YELLOW + "Alias: " + Style.RESET_ALL + "Caster")
-    print("    " + Fore.YELLOW + "Version: " + Style.RESET_ALL + "1.1.0")
-    print("    " + Fore.YELLOW + "Codename: " + Style.RESET_ALL + "Judge")
-    print("    " + Fore.YELLOW + "Documentation & Usage: " + Style.RESET_ALL + "https://github.com/casterbyte/Sara")
-    print()
+    print("    " + Fore.YELLOW + "Version: " + Style.RESET_ALL + "1.2")
+    print("    " + Fore.YELLOW + "Documentation & Usage: " + Style.RESET_ALL + "https://github.com/casterbyte/Sara\n")
 
     # Display a legal disclaimer to emphasize responsible usage
     print("    " + Fore.YELLOW + "[!] DISCLAIMER: Use this tool only for auditing your own devices.")
@@ -55,7 +48,7 @@ def connect_to_router(ip, username, password, port, key_file, passphrase):
         "passphrase": passphrase,
     }
     try:
-        print(Fore.GREEN + Style.BRIGHT + f"[*] Connecting to RouterOS at {ip}:{port}")
+        print(Fore.WHITE + f"[*] Connecting to RouterOS at {ip}:{port}")
         connection = ConnectHandler(**device)
         print(Fore.WHITE + "[*] Connection successful!")
         return connection
@@ -72,28 +65,7 @@ def parse_version(version_str):
     # Parses a version string into a comparable Version object. Example: "6.49.7" → Version(6.49.7)
     return Version(version_str)
 
-def extract_version_from_cve(description):
-    # Case: "X.Y to Z.W"
-    range_match = re.search(r"v?(\d+\.\d+(?:\.\d+)?)\s*to\s*v?(\d+\.\d+(?:\.\d+)?)", description, re.IGNORECASE)
-    if range_match:
-        start_version, end_version = range_match.groups()
-        return "range", parse_version(start_version), parse_version(end_version)
-
-    # Case: "before X.Y.Z", "after X.Y.Z", "through X.Y.Z", "and below X.Y.Z"
-    keyword_match = re.search(r"(before|through|after|and below)?\s*v?(\d+\.\d+(?:\.\d+)?)", description, re.IGNORECASE)
-    if keyword_match:
-        keyword, version = keyword_match.groups()
-        return keyword, None, parse_version(version)
-
-    # Case: "6.49.x" (Wildcard notation)
-    wildcard_match = re.search(r"v?(\d+\.\d+)\.x", description, re.IGNORECASE)
-    if wildcard_match:
-        base_version = wildcard_match.group(1)  # Example: "6.49"
-        return "before", None, parse_version(base_version + ".999")  # Treat as "6.49.999" for comparison
-
-    return None, None, None
-
-# Retrieves the RouterOS version and checks for known CVEs
+# Retrieves the RouterOS version
 def check_routeros_version(connection):
     # Separator outlet
     separator("Checking RouterOS Version")
@@ -104,36 +76,6 @@ def check_routeros_version(connection):
     if match:
         routeros_version = parse_version(match.group(1))
         print(Fore.GREEN + f"[+] Detected RouterOS Version: {routeros_version}")
-
-        found_cves = []
-
-        for cve, description in cve_routeros_database.items():
-            keyword, start_version, end_version = extract_version_from_cve(description)
-
-            if keyword == "range" and start_version and end_version:
-                if start_version <= routeros_version <= end_version:
-                    found_cves.append((cve, description))
-
-            elif keyword and end_version:
-                if keyword == "before" and routeros_version < end_version:
-                    found_cves.append((cve, description))
-                elif keyword == "through" and routeros_version <= end_version:
-                    found_cves.append((cve, description))
-                elif keyword == "after" and routeros_version > end_version:
-                    found_cves.append((cve, description))
-                elif keyword == "and below" and routeros_version <= end_version:
-                    found_cves.append((cve, description))
-
-            # Direct version match
-            elif str(routeros_version) in description:
-                found_cves.append((cve, description))
-
-        if found_cves:
-            print(Fore.YELLOW + f"[!] CAUTION: Found {len(found_cves)} CVEs affecting RouterOS {routeros_version}!")
-            for cve, description in found_cves:
-                print(Fore.RED + f"    - {cve}: {description}")
-        else:
-            print(Fore.GREEN + "[+] No known CVEs found for this version.")
     else:
         print(Fore.RED + Style.BRIGHT + "[-] ERROR: Could not determine RouterOS version.")
 
@@ -145,10 +87,10 @@ def check_smb(connection):
     output = connection.send_command(command)
     
     if "enabled: yes" in output:
-        print(Fore.RED + Style.BRIGHT + "[*] CAUTION: SMB service is enabled! Did you turn it on? Do you need SMB? Also avoid CVE-2018-7445")
+        print(Fore.RED + "[*] CAUTION: SMB service is enabled! Did you turn it on? Do you need SMB? Also avoid CVE-2018-7445")
     else:
         print(Fore.GREEN + "[+] SMB is disabled. No risk detected.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
        
 # Check for high-risk remote management interfaces (RMI)
 def check_rmi_services(connection):
@@ -173,7 +115,7 @@ def check_rmi_services(connection):
             display_name = service_name.upper().replace("WWW", "HTTP").replace("WWW-SSL", "HTTPS")
 
             if service_name in high_risk:
-                print(Fore.RED + Style.BRIGHT + f"[!] ALERT: {display_name} is ENABLED! This is a high security risk.")
+                print(Fore.RED + f"[!] ALERT: {display_name} is ENABLED! This is a high security risk.")
                 if service_name == "ftp":
                     print(Fore.RED + "    - Are you sure you need FTP?")
                 if service_name == "telnet":
@@ -183,13 +125,13 @@ def check_rmi_services(connection):
                 risks_found = True
 
             elif service_name in moderate_risk:
-                print(Fore.YELLOW + Style.BRIGHT + f"[!] CAUTION: {display_name} is enabled.")
+                print(Fore.YELLOW + f"[!] CAUTION: {display_name} is enabled.")
                 if service_name in ["api", "api-ssl"]:
                     print(Fore.YELLOW + "    - RouterOS API is vulnerable to a bruteforce attack. If you need it, make sure you have access to it.")
                 elif service_name == "www-ssl":
                     print(Fore.GREEN + "    - HTTPS detected. Ensure it uses a valid certificate and strong encryption.")
                 elif service_name == "winbox":
-                    print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: If you're using 'Keep Password' in Winbox, your credentials may be stored in plaintext!")
+                    print(Fore.RED + "[!] CAUTION: If you're using 'Keep Password' in Winbox, your credentials may be stored in plaintext!")
                     print(Fore.YELLOW + "    - If your PC is compromised, attackers can extract saved credentials.")
                     print(Fore.YELLOW + "    - Consider disabling 'Keep Password' to improve security.")
                     
@@ -199,7 +141,7 @@ def check_rmi_services(connection):
 
     if not risks_found:
         print(Fore.GREEN + "[+] No high-risk RMI services enabled.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Check for default usernames that could be security risks
 def check_default_users(connection):
@@ -216,7 +158,7 @@ def check_default_users(connection):
         if match:
             username = match.group(1).lower()
             if username in default_users:
-                print(Fore.YELLOW + Style.BRIGHT + f"[!] CAUTION: Default username '{username}' detected! Change it to a unique one.")
+                print(Fore.YELLOW + f"[!] CAUTION: Default username '{username}' detected! Change it to a unique one.")
                 risks_found = True
     if not risks_found:
         print(Fore.GREEN + "[+] No default usernames found.")
@@ -240,12 +182,12 @@ def checking_access_to_RMI(connection):
             if address_match:
                 address_list = address_match.group(1).split(",")
                 if not address_list or address_list == [""] or "0.0.0.0/0" in address_list:
-                    print(Fore.YELLOW + Style.BRIGHT + f"[!] CAUTION: {service_name.upper()} is exposed to the entire network! Restrict access to trusted IP ranges.")
+                    print(Fore.YELLOW + f"[!] CAUTION: {service_name.upper()} is exposed to the entire network! Restrict access to trusted IP ranges.")
                     risks_found = True
                 else:
                     print(Fore.GREEN + f"[+] OK! {service_name.upper()} is restricted to: {', '.join(address_list)}")
             else:
-                print(Fore.YELLOW + Style.BRIGHT + f"[!] CAUTION: {service_name.upper()} has no IP restriction set! Please restrict access.")
+                print(Fore.RED + f"[!] CAUTION: {service_name.upper()} has no IP restriction set! Please restrict access.")
                 risks_found = True
 
     if not risks_found:
@@ -284,7 +226,7 @@ def check_wifi_security(connection):
                     wps = wps_match.group(1) if wps_match else None  # Fix: If WPS is not found, set None
 
                     if pmkid == "no":
-                        print(Fore.RED + Style.BRIGHT + f"[!] ALERT: Wi-Fi '{name}' has insecure settings!")
+                        print(Fore.RED + f"[!] ALERT: Wi-Fi '{name}' has insecure settings!")
                         print(Fore.RED + "    - PMKID attack is possible (disable-pmkid=no)")
                         risks_found = True
 
@@ -308,7 +250,7 @@ def check_wifi_security(connection):
                 pmkid = pmkid_match.group(1) if pmkid_match else "unknown"
 
                 if pmkid == "no":
-                    print(Fore.RED + Style.BRIGHT + f"[!] ALERT: Security Profile '{profile_name}' allows PMKID attack! (disable-pmkid=no)")
+                    print(Fore.RED + f"[!] ALERT: Security Profile '{profile_name}' allows PMKID attack! (disable-pmkid=no)")
                     risks_found = True
 
         # /interface wifi security print (ROS v7.10+ only)
@@ -327,7 +269,7 @@ def check_wifi_security(connection):
                         wps = wps_match.group(1) if wps_match else None  # Fix: Avoid "WPS is enabled (unknown)"
 
                         if pmkid == "no":
-                            print(Fore.RED + Style.BRIGHT + f"[!] ALERT: Wi-Fi security profile '{sec_name}' has insecure settings!")
+                            print(Fore.RED + f"[!] ALERT: Wi-Fi security profile '{sec_name}' has insecure settings!")
                             print(Fore.RED + "    - PMKID attack is possible (disable-pmkid=no)")
                             risks_found = True
 
@@ -345,7 +287,7 @@ def check_wifi_security(connection):
     if not risks_found:
         print(Fore.GREEN + "[+] All Wi-Fi interfaces and security profiles have secure settings.")
         print(Fore.YELLOW + "[*] If you use WPA-PSK or WPA2-PSK, take care of password strength. So that the handshake cannot be easily brute-forced.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Check if UPnP is enabled
 def check_upnp_status(connection):
@@ -355,10 +297,10 @@ def check_upnp_status(connection):
     output = connection.send_command(command)
 
     if "enabled: yes" in output:
-        print(Fore.RED + Style.BRIGHT + "[!] ALERT: UPnP is ENABLED! This is a very insecure protocol that automatically pushes internal hosts to the Internet. This protocol is used for automatic port forwarding and may also indicate a potential router compromise. Did you enable UPnP yourself?")
+        print(Fore.RED + "[!] ALERT: UPnP is ENABLED! This is a very insecure protocol that automatically pushes internal hosts to the Internet. This protocol is used for automatic port forwarding and may also indicate a potential router compromise. Did you enable UPnP yourself?")
     else:
         print(Fore.GREEN + "[+] UPnP is disabled. No risk detected.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Check if the router is acting as a DNS server
 def check_dns_status(connection):
@@ -368,10 +310,10 @@ def check_dns_status(connection):
     output = connection.send_command(command)
 
     if "allow-remote-requests: yes" in output:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: Router is acting as a DNS server! This is just a warning. The DNS port on your RouterOS should not be on the external interface.")
+        print(Fore.YELLOW + "[!] CAUTION: Router is acting as a DNS server! This is just a warning. The DNS port on your RouterOS should not be on the external interface.")
     else:
         print(Fore.GREEN + "[+] DNS remote requests are disabled. No risk detected.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Check DDNS Settings
 def check_ddns_status(connection):
@@ -381,10 +323,10 @@ def check_ddns_status(connection):
     output = connection.send_command(command)
 
     if "ddns-enabled: yes" in output:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: Dynamic DNS is enabled! Are you sure you need it?")
+        print(Fore.YELLOW + "[!] CAUTION: Dynamic DNS is enabled! Are you sure you need it?")
     else:
         print(Fore.GREEN + "[+] DDNS is disabled. No risk detected.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Detect active PoE interfaces that might pose a risk to connected devices
 def check_poe_status(connection):
@@ -403,12 +345,12 @@ def check_poe_status(connection):
         poe = poe_match.group(1) if poe_match else "none"
 
         if poe in ["auto-on", "forced-on"]:
-            print(Fore.YELLOW + Style.BRIGHT + f"[!] CAUTION: PoE is enabled on {name}. Ensure that connected devices support PoE to prevent damage.")
+            print(Fore.YELLOW + f"[!] CAUTION: PoE is enabled on {name}. Ensure that connected devices support PoE to prevent damage.")
             risks_found = True
 
     if not risks_found:
         print(Fore.GREEN + "[+] No PoE-enabled interfaces detected.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Checking RouterBOOT
 def check_routerboot_protection(connection):
@@ -418,10 +360,10 @@ def check_routerboot_protection(connection):
     output = connection.send_command(command)
 
     if "protected-routerboot: disabled" in output:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: RouterBOOT protection is disabled! This can allow unauthorized firmware changes and password resets via Netinstall.")
+        print(Fore.YELLOW + "[!] CAUTION: RouterBOOT protection is disabled! This can allow unauthorized firmware changes and password resets via Netinstall.")
     else:
         print(Fore.GREEN + "[+] RouterBOOT protection is enabled. No risk detected.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 def check_socks_status(connection):
     separator("Checking SOCKS Proxy Status")
@@ -429,10 +371,10 @@ def check_socks_status(connection):
     output = connection.send_command(command)
 
     if "enabled: yes" in output:
-        print(Fore.RED + Style.BRIGHT + "[!] ALERT: SOCKS proxy is enabled! This may indicate a possible compromise of the device, the entry point to the internal network.")
+        print(Fore.RED + "[!] ALERT: SOCKS proxy is enabled! This may indicate a possible compromise of the device, the entry point to the internal network.")
     else:
         print(Fore.GREEN + "[+] SOCKS proxy is disabled. No risk detected.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Verify if RouterBOOT protection is enabled to prevent unauthorized firmware modifications
 def check_bandwidth_server_status(connection):
@@ -442,10 +384,10 @@ def check_bandwidth_server_status(connection):
     output = connection.send_command(command)
 
     if "enabled: yes" in output:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: Bandwidth server is enabled! Possible unwanted traffic, possible CPU load.")
+        print(Fore.YELLOW + "[!] CAUTION: Bandwidth server is enabled! Possible unwanted traffic, possible CPU load.")
     else:
         print(Fore.GREEN + "[+] Bandwidth server is disabled. No risk detected.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Analyze discovery protocols (CDP, LLDP, MNDP) that might expose network information
 def check_neighbor_discovery(connection):
@@ -455,15 +397,15 @@ def check_neighbor_discovery(connection):
     output = connection.send_command(command)
 
     if "discover-interface-list: all" in output:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: RouterOS sends Discovery protocol packets to all interfaces. This can be used by an attacker to gather data about RouterOS.")
+        print(Fore.YELLOW + "[!] CAUTION: RouterOS sends Discovery protocol packets to all interfaces. This can be used by an attacker to gather data about RouterOS.")
 
     protocol_match = re.search(r'protocol: ([\w,]+)', output)
     if protocol_match:
         protocols = protocol_match.group(1)
-        print(Fore.YELLOW + Style.BRIGHT + f"[!] Neighbor Discovery Protocols enabled: {protocols}")
+        print(Fore.YELLOW +  f"[!] Neighbor Discovery Protocols enabled: {protocols}")
     if "discover-interface-list: all" not in output and not protocol_match:
         print(Fore.GREEN + "[+] No security risks found in Neighbor Discovery Protocol settings.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Ensure a minimum password length policy is enforced
 def check_password_length_policy(connection):
@@ -473,10 +415,10 @@ def check_password_length_policy(connection):
     output = connection.send_command(command)
 
     if "minimum-password-length: 0" in output:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: No minimum password length is enforced! The length of the created passwords must be taken into account.")
+        print(Fore.YELLOW + "[!] CAUTION: No minimum password length is enforced! The length of the created passwords must be taken into account.")
     if "minimum-password-length: 0" not in output:
         print(Fore.GREEN + "[+] Password policy is enforced. No risk detected.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Analyze SSH security settings, including strong encryption and port forwarding risks
 def check_ssh_security(connection):
@@ -486,15 +428,15 @@ def check_ssh_security(connection):
     output = connection.send_command(command)
 
     if "forwarding-enabled: both" in output:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: SSH Dynamic Port Forwarding is enabled! This could indicate a RouterOS compromise, and SSH DPF could also be used by an attacker as a pivoting technique.")
+        print(Fore.YELLOW + "[!] CAUTION: SSH Dynamic Port Forwarding is enabled! This could indicate a RouterOS compromise, and SSH DPF could also be used by an attacker as a pivoting technique.")
     if "strong-crypto: no" in output:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: strong-crypto is disabled! It is recommended to enable it to enhance security. This will:")
+        print(Fore.YELLOW + "[!] CAUTION: strong-crypto is disabled! It is recommended to enable it to enhance security. This will:")
         print(Fore.YELLOW + "    - Use stronger encryption, HMAC algorithms, and larger DH primes;")
         print(Fore.YELLOW + "    - Prefer 256-bit encryption, disable null encryption, prefer SHA-256;")
         print(Fore.YELLOW + "    - Disable MD5, use 2048-bit prime for Diffie-Hellman exchange;")
     if "forwarding-enabled: both" not in output and "strong-crypto: no" not in output:
         print(Fore.GREEN + "[+] SSH security settings are properly configured.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Check if connection tracking is enabled, which may impact performance
 def check_connection_tracking(connection):
@@ -503,12 +445,12 @@ def check_connection_tracking(connection):
     command = "/ip firewall connection tracking print"
     output = connection.send_command(command)
     if "enabled: auto" in output or "enabled: on" in output:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: Connection Tracking is enabled! This means RouterOS is tracks connection statuses.")
+        print(Fore.YELLOW + "[!] CAUTION: Connection Tracking is enabled! This means RouterOS is tracks connection statuses.")
         print(Fore.YELLOW + "    - If this device is a transit router and does NOT use NAT, consider disabling connection tracking to reduce CPU load.")
     
     if "enabled: auto" not in output and "enabled: on" not in output:
         print(Fore.GREEN + "[+] Connection Tracking is properly configured.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Verify if RoMON is enabled, which might expose Layer 2 management access
 def check_romon_status(connection):
@@ -518,40 +460,63 @@ def check_romon_status(connection):
     output = connection.send_command(command)
 
     if "enabled: yes" in output:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: RoMON is enabled! This allows Layer 2 management access, which may expose the router to unauthorized control.")
+        print(Fore.YELLOW + "[!] CAUTION: RoMON is enabled! This allows Layer 2 management access, which may expose the router to unauthorized control.")
         print(Fore.YELLOW + "    - If RoMON is not required, disable it to reduce attack surface.")
     if "enabled: yes" not in output:
         print(Fore.GREEN + "[+] RoMON is disabled. No risk detected.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Analyze MAC-based Winbox access settings
 def check_mac_winbox_security(connection):
-    # Separator outlet
     separator("Checking Winbox MAC Server Settings")
 
     # MAC-Winbox Server
-    command = "tool mac-server mac-winbox print"
-    output = connection.send_command(command)
-    if "allowed-interface-list: all" in output:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: MAC Winbox access is enabled on all interfaces. This compromises the security of the Winbox interface.")
-    else:
-        print(Fore.GREEN + "[+] MAC Winbox are properly restricted.")
+    try:
+        command = "/tool mac-server mac-winbox print"
+        output = connection.send_command(command)
+
+        if "allowed-interface-list" in output:
+            if "allowed-interface-list: all" in output:
+                print(Fore.YELLOW + "[!] CAUTION: MAC Winbox access is enabled on all interfaces.")
+            else:
+                print(Fore.GREEN + "[+] MAC Winbox is properly restricted.")
+        else:
+            # Fallback for older versions: look for "INTERFACE" column and value "all"
+            if re.search(r"\bINTERFACE\s*\n.*\ball\b", output, re.DOTALL | re.IGNORECASE):
+                print(Fore.YELLOW + "[!] CAUTION: MAC Winbox access is enabled on all interfaces")
+            else:
+                print(Fore.GREEN + "[+] MAC Winbox is properly restricted (legacy format).")
+    except Exception as e:
+        print(Fore.RED + f"[-] ERROR while checking MAC Winbox: {e}")
 
     # MAC-Server
-    command = "tool mac-server print"
-    output = connection.send_command(command)
-    if "allowed-interface-list: all" in output:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: MAC Telnet access is enabled on all interfaces. This compromises the security of the Winbox interface.")
-    else:
-        print(Fore.GREEN + "[+] MAC Telnet are properly restricted.")
+    try:
+        command = "/tool mac-server print"
+        output = connection.send_command(command)
+
+        if "allowed-interface-list" in output:
+            if "allowed-interface-list: all" in output:
+                print(Fore.YELLOW + "[!] CAUTION: MAC Telnet access is enabled on all interfaces.")
+            else:
+                print(Fore.GREEN + "[+] MAC Telnet is properly restricted.")
+        else:
+            if re.search(r"\bINTERFACE\s*\n.*\ball\b", output, re.DOTALL | re.IGNORECASE):
+                print(Fore.YELLOW + "[!] CAUTION: MAC Telnet access is enabled on all interfaces")
+            else:
+                print(Fore.GREEN + "[+] MAC Telnet is properly restricted (legacy format).")
+    except Exception as e:
+        print(Fore.RED + f"[-] ERROR while checking MAC Telnet: {e}")
 
     # MAC Ping
-    command = "tool mac-server ping print"
-    output = connection.send_command(command)
-    if "enabled: yes" in output:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: MAC Ping is enabled. Possible unwanted traffic.")
-    else:
-        print(Fore.GREEN + "[+] MAC Ping are properly restricted.")
+    try:
+        command = "/tool mac-server ping print"
+        output = connection.send_command(command)
+        if "enabled: yes" in output:
+            print(Fore.YELLOW + "[!] CAUTION: MAC Ping is enabled. Possible unwanted traffic.")
+        else:
+            print(Fore.GREEN + "[+] MAC Ping is properly restricted.")
+    except Exception as e:
+        print(Fore.RED + f"[-] ERROR while checking MAC Ping: {e}")
 
 # Check for weak SNMP community strings that could be exploited
 def check_snmp(connection):
@@ -568,12 +533,12 @@ def check_snmp(connection):
         if match:
             community_name = match.group(1).lower()
             if community_name in bad_names:
-                print(Fore.YELLOW + Style.BRIGHT + f"[!] CAUTION: Weak SNMP community string detected: '{community_name}'. Change it to a secure, unique value.")
+                print(Fore.YELLOW + f"[!] CAUTION: Weak SNMP community string detected: '{community_name}'. Change it to a secure, unique value.")
                 risks_found = True
 
     if not risks_found:
         print(Fore.GREEN + "[+] SNMP community strings checked. No weak values detected.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Detect and analyze firewall NAT rules that could expose internal services
 def check_dst_nat_rules(connection):
@@ -586,14 +551,14 @@ def check_dst_nat_rules(connection):
         if "action=dst-nat" in line or "action=netmap" in line:
             dst_nat_rules.append(line.strip())
     if dst_nat_rules:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] CAUTION: Destination NAT (dst-nat/netmap) rules detected! Exposing devices to the internet can be dangerous.")
-        print(Fore.YELLOW + Style.BRIGHT + "[*] Similar rules can also be created by the attacker. Did you really create these rules yourself?")
+        print(Fore.YELLOW + "[!] CAUTION: Destination NAT (dst-nat/netmap) rules detected! Exposing devices to the internet can be dangerous.")
+        print(Fore.YELLOW + "[*] Similar rules can also be created by the attacker. Did you really create these rules yourself?")
         print(Fore.YELLOW + "    - Review the following NAT rules:")
         for rule in dst_nat_rules:
             print(Fore.YELLOW + f"        {rule}")
     if not dst_nat_rules:
         print(Fore.GREEN + "[+] No Destination NAT (dst-nat/netmap) rules detected. No risks found.")
-        print(Fore.GREEN + "[+] No issues found.")
+        print("[" + Fore.GREEN + "+" + Fore.WHITE + "] No issues found.")
 
 # Identify potentially malicious scheduled tasks
 def detect_malicious_schedulers(connection):
@@ -631,7 +596,7 @@ def detect_malicious_schedulers(connection):
         if "import" in event and import_match:
             imported_file = import_match.group(1).strip(";")
             if imported_file in fetch_files:
-                print(Fore.RED + Style.BRIGHT + f"[!] ALERT: '{name}' is a BACKDOOR!")
+                print(Fore.RED + f"[!] ALERT: '{name}' is a BACKDOOR!")
                 print(Fore.RED + "    - This scheduler imports a previously fetched script.")
                 print(Fore.RED + "    - Attacker can inject any command remotely via this script.")
                 print(Fore.RED + f"    - Interval: {interval_value}{interval_unit}, ensuring persistence.")
@@ -640,7 +605,7 @@ def detect_malicious_schedulers(connection):
         # High privileges checking
         dangerous_policies = {"password", "sensitive", "sniff", "ftp"}
         if any(p in dangerous_policies for p in policy):
-            print(Fore.RED + Style.BRIGHT + f"[!] ALERT: '{name}' has HIGH PRIVILEGES!")
+            print(Fore.RED + f"[!] ALERT: '{name}' has HIGH PRIVILEGES!")
             print(Fore.RED + f"    - It has dangerous permissions: {', '.join(policy)}")
             risks_found = True
 
@@ -657,7 +622,7 @@ def detect_malicious_schedulers(connection):
 
         # Frequent execution detection
         if interval_value and interval_unit in ["s", "m", "h"] and interval_value < 25:
-            print(Fore.RED + Style.BRIGHT + f"[!] ALERT: '{name}' executes TOO FREQUENTLY ({interval_value}{interval_unit})!")
+            print(Fore.RED + f"[!] ALERT: '{name}' executes TOO FREQUENTLY ({interval_value}{interval_unit})!")
             print(Fore.RED + "    - This indicates botnet-like persistence.")
             risks_found = True
 
@@ -693,35 +658,16 @@ def check_static_dns_entries(connection):
     else:
         print(Fore.GREEN + "[+] No static DNS entries found.")
 
-# Retrieve router uptime
-def get_router_uptime(connection):
-    # Separator outlet
-    separator("Checking Router Uptime")
-    command = "/system resource print"
-    output = connection.send_command(command)
 
-    # Extract uptime value
-    match = re.search(r"uptime:\s*([\w\d\s]+)", output)
+# Require user confirmation before proceeding, emphasizing legal responsibility
+def confirm_legal_usage():
+    print("    " + "WARNING: This tool is for security auditing of YOUR OWN RouterOS devices.")
+    print("    " + "Unauthorized use may be illegal. Proceed responsibly.\n")
+    response = input("    " + "Do you wish to proceed? [yes/no]: ").strip()
     
-    if match:
-        uptime_raw = match.group(1)
-        weeks = days = hours = minutes = 0
-
-        # Extract individual time units
-        if "w" in uptime_raw:
-            weeks = int(re.search(r"(\d+)w", uptime_raw).group(1))
-        if "d" in uptime_raw:
-            days = int(re.search(r"(\d+)d", uptime_raw).group(1))
-        if "h" in uptime_raw:
-            hours = int(re.search(r"(\d+)h", uptime_raw).group(1))
-        if "m" in uptime_raw:
-            minutes = int(re.search(r"(\d+)m", uptime_raw).group(1))
-
-        # Convert weeks to days and format output
-        total_days = weeks * 7 + days
-        print(Fore.GREEN + Style.BRIGHT + f"[*] Router Uptime: {total_days} days, {hours} hours, {minutes} minutes")
-    else:
-        print(Fore.RED + "[-] ERROR: Could not retrieve uptime.")
+    if response.lower() != "yes":
+        print("\nOperation aborted. Exiting...")
+        sys.exit(0)
 
 # Require user confirmation before proceeding, emphasizing legal responsibility
 def confirm_legal_usage():
@@ -735,56 +681,54 @@ def prompt_legal_usage():
         print("\nOperation aborted. Exiting...")
         sys.exit(0)
 
-# # Parse command-line arguments, establish connection, and execute all security checks
+# Main func
 def main():
-    # Print banner
     banner()
-    
-    # Argument parsing
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--ip", help="The address of your MikroTik router")
     parser.add_argument("--username", help="SSH username (RO account can be used)")
     parser.add_argument("--password", help="SSH password")
     parser.add_argument("--ssh-key", help="SSH key")
     parser.add_argument("--passphrase", help="SSH key passphrase")
-    parser.add_argument("--skip-confirmation", action='store_true', help='Skips the confirmation prompt (disclamer: ensure that your are allowed to use this tool)')
     parser.add_argument("--port", type=int, default=22, help="SSH port (default: 22)")
+    parser.add_argument("--cve", action="store_true", help="Check RouterOS version against known CVEs")
+    parser.add_argument("--skip-confirmation", action='store_true', help="Skips legal usage confirmation prompt")
+
     args = parser.parse_args()
 
     if len(sys.argv) == 2 and sys.argv[1] in ["-h", "--help"]:
         parser.print_help()
         sys.exit(0)
 
-    if not args.ip:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] ERROR: Missing required arguments")
-        print(Fore.YELLOW + "[!] Use 'sara --help' for more information")
-        sys.exit(1)
-
-    if not args.username or (not args.password and not args.ssh_key):
-        print(Fore.YELLOW + Style.BRIGHT + "[!] ERROR: Missing required arguments")
+    if not args.ip or not args.username or (not args.password and not args.ssh_key):
+        print(Fore.YELLOW + "[!] ERROR: Missing required arguments")
         print(Fore.YELLOW + "[!] Use 'sara --help' for more information")
         sys.exit(1)
 
     if args.password and args.ssh_key:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] ERROR: Can't use both password & ssh_key authentication")
-        print(Fore.YELLOW + "[!] Use 'sara --help' for more information")
+        print(Fore.YELLOW + "[!] ERROR: Can't use both password & ssh_key authentication")
         sys.exit(1)
-    
-    if args.passphrase and not args.ssh_key:
-        print(Fore.YELLOW + Style.BRIGHT + "[!] ERROR: The passphrase argument can't be used when not specifying a ssh_key")
-        print(Fore.YELLOW + "[!] Use 'sara --help' for more information")
-        sys.exit(1)
-    
 
-    confirm_legal_usage()
+    if args.passphrase and not args.ssh_key:
+        print(Fore.YELLOW + "[!] ERROR: Passphrase requires --ssh-key")
+        sys.exit(1)
+
+# Legal warning (interactive only if not skipped)
     if not args.skip_confirmation:
+        # disclaimer text
+        confirm_legal_usage()
+        # yes or no
         prompt_legal_usage()
+    else:
+        confirm_legal_usage()
 
     # Start timer
     start_time = time.time()
 
-    # Connecting to the router
-    connection = connect_to_router(args.ip,
+    # Connect to RouterOS
+    connection = connect_to_router(
+        args.ip,
         args.username,
         args.password,
         args.port,
@@ -792,7 +736,13 @@ def main():
         args.passphrase
     )
 
-    # Execute all implemented security checks in sequence
+    # Run only CVE check if --cve is used
+    if args.cve:
+        run_cve_audit(connection)
+        connection.disconnect()
+        return
+
+    # Run full audit
     check_routeros_version(connection)
     check_smb(connection)
     check_rmi_services(connection)
@@ -816,22 +766,15 @@ def main():
     check_dst_nat_rules(connection)
     detect_malicious_schedulers(connection)
     check_static_dns_entries(connection)
-    get_router_uptime(connection)
 
-    # Print a blank line for better output formatting
-    print ()
+    print()
 
-    # Close the SSH connection to the router
     connection.disconnect()
-    print(Fore.GREEN + Style.BRIGHT + f"[*] Disconnected from RouterOS ({args.ip}:{args.port})")
+    print(Fore.WHITE + f"[*] Disconnected from RouterOS ({args.ip}:{args.port})")
 
-    # Measure and display the total execution time
     end_time = time.time()
     total_time = round(end_time - start_time, 2)
-
-    # Print a closing message emphasizing continuous security improvements
-    print(Fore.GREEN + Style.BRIGHT + f"[*] All checks have been completed. Security inspection completed in {total_time} seconds\n")
-    print(Fore.MAGENTA + Style.BRIGHT + "[*] " + Fore.WHITE + "Remember: " + Fore.RED + "Security" + Fore.WHITE + " is a " + Fore.GREEN + "process" + Fore.WHITE + ", not a " + Fore.YELLOW + "state.")
+    print(Fore.WHITE + f"[*] All checks have been completed. Security inspection completed in {total_time} seconds\n")
 
 if __name__ == "__main__":
     main()

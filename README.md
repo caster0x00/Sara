@@ -5,13 +5,11 @@ RouterOS configuration analyzer to find security misconfigurations and vulnerabi
 ![](/banner/banner.png)
 
 ```
-RouterOS Security Inspector. For security engineers
-Operates remotely using SSH, designed to evaluate RouterOS security
+RouterOS Security Inspector. Designed for security engineers
 
 Author: Magama Bazarov, <magamabazarov@mailbox.org>
 Alias: Caster
-Version: 1.1.1
-Codename: Judge
+Version: 1.2
 ```
 
 # Disclaimer
@@ -127,28 +125,52 @@ The same principle works for the other checks. Only read the configuration and t
 
 Sara performs a security analysis of RouterOS by checking the current firmware version and checking it against a database of known vulnerabilities (CVEs). This process identifies critical vulnerabilities that can be exploited by attackers to compromise the device.
 
-## But how does it work?
+## How does it work?
 
-1. Sara extracts the current RouterOS version from the device using the system command (`/system resource print`)
+Sara has a special module called `cve_analyzer.py`, which creates `routeros_cves.json` based on the NVD NIST database containing information about vulnerabilities, including those in MikroTik RouterOS.
+Vulnerabilities for the RouterOS version are searched for using the `--cve` argument. The results will show the total number of vulnerabilities, their categorization, as well as the CVE ID and a brief description.
 
-2. The check is performed using the built-in `cve_lookup.py` module, which stores a dictionary of known RouterOS vulnerabilities. This module is based on data obtained [from the MITRE CVE database](https://cve.mitre.org/data/downloads) and contains:
-
-   - CVE ID;
-   - Vulnerability Description;
-   - Range of vulnerable RouterOS versions
-
-   Sara analyzes the version of the device and determines if it falls into the list of vulnerable versions.
-
-3. If the RouterOS version contains known vulnerabilities, Sara displays a warning indicating:
-
-   - CVE ID;
-   - Description of the vulnerability and potential risks.
+```bash
+caster@kali:~$ sara --ip 192.168.88.1 --username admin --password admin --cve
+```
 
 ## Specifics of checking
 
 - Sara does not verify real-world exploitation of vulnerabilities. It only cross-references the RouterOS version against publicly available CVE databases;
 - If the device is running an older version of RouterOS, but vulnerable services have been manually disabled, some warnings may be false positives;
-- The CVE database is updated over time, so it is recommended to keep an eye out for current patches from MikroTik yourself.
+- It is recommended to manually validate your version of RouterOS after the audit to ensure there are no false positives.
+
+## Example
+
+```bash
+[+] Detected RouterOS Version: 7.1.1
+[!] routeros_cves.json not found.
+[*] Fetching CVEs from NVD...
+[+] Saved 74 CVEs to routeros_cves.json
+[*] Total matching CVEs: 4
+[*] CRITICAL: 1
+[*] HIGH: 1
+[*] MEDIUM: 2
+[*] Vulnerability details:
+
+→ CVE-2022-45313 [HIGH]
+    Mikrotik RouterOs before stable v7.5 was discovered to contain an out-of-bounds read in the hotspot process. This vulnerability allows attackers to execute arbitrary code via a crafted nova message.
+    CVSS Score: 8.8
+
+→ CVE-2022-45315 [CRITICAL]
+    Mikrotik RouterOs before stable v7.6 was discovered to contain an out-of-bounds read in the snmp process. This vulnerability allows attackers to execute arbitrary code via a crafted packet.
+    CVSS Score: 9.8
+
+→ CVE-2023-41570 [MEDIUM]
+    MikroTik RouterOS v7.1 to 7.11 was discovered to contain incorrect access control mechanisms in place for the Rest API.
+    CVSS Score: 5.3
+
+→ CVE-2024-54772 [MEDIUM]
+    An issue was discovered in the Winbox service of MikroTik RouterOS long-term release v6.43.13 through v6.49.13 and stable v6.43 through v7.17.2. A patch is available in the stable release v6.49.18. A discrepancy in response size between connection attempts made with a valid username and those with an invalid username allows attackers to enumerate for valid accounts.
+    CVSS Score: 5.4
+```
+
+> The quality of entries in the NVD leaves much to be desired; in many cases, fields such as `versionEndExcluding` or `versionStartExcluding` have a value of “null.” Therefore, it is also important to validate your RouterOS version to ensure that a particular vulnerability exists.
 
 # How to use
 
@@ -176,7 +198,7 @@ caster@kali:~$ sara -h
 Sara supports the following command line options:
 
 ```bash
-usage: sara.py [-h] [--ip IP] [--username USERNAME] [--password PASSWORD] [--ssh-key SSH_KEY] [--passphrase PASSPHRASE] [--skip-confirmation] [--port PORT]
+usage: sara.py [-h] [--ip IP] [--username USERNAME] [--password PASSWORD] [--ssh-key SSH_KEY] [--passphrase PASSPHRASE] [--port PORT] [--cve] [--skip-confirmation]
 
 options:
   -h, --help            show this help message and exit
@@ -186,8 +208,9 @@ options:
   --ssh-key SSH_KEY     SSH key
   --passphrase PASSPHRASE
                         SSH key passphrase
-  --skip-confirmation   Skips the confirmation prompt (disclamer: ensure that your are allowed to use this tool)
   --port PORT           SSH port (default: 22)
+  --cve                 Check RouterOS version against known CVEs
+  --skip-confirmation   Skips legal usage confirmation prompt
 ```
 
 1. `--ip` - this argument specifies the IP address of the MikroTik device to which Sara is connecting;
@@ -206,168 +229,11 @@ options:
 
     > This only works when using the `--ssh-key` argument.
 
-6. `--skip-confirmation` skips the confirmation prompt that asks if you are allowed to use this tool on the target system
+6. `--port` - allows you to specify a non-standard SSH port for connection. The default is **22**, but if you have changed the SSH port number, it must be specified manually.
 
-    > Please do ensure the legality of what you're doing.
+7. `--cve` - launches a vulnerability search using the NIST NVD database.
 
-7. `--port` - allows you to specify a non-standard SSH port for connection. The default is **22**, but if you have changed the SSH port number, it must be specified 
-
-# Sara's Launch
-
-```bash
-caster@kali:~$ python3 sara.py --ip 192.168.88.1 --username admin --password mypass          
-
-    _____                 
-   / ____|                
-  | (___   __ _ _ __ __ _ 
-   \___ \ / _` | '__/ _` |
-   ____) | (_| | | | (_| |
-  |_____/ \__,_|_|  \__,_|
-
-    RouterOS Security Inspector. For security engineers
-    Operates remotely using SSH, designed to evaluate RouterOS security
-
-    Author: Magama Bazarov, <caster@exploit.org>
-    Alias: Caster
-    Version: 1.1
-    Codename: Judge
-    Documentation & Usage: https://github.com/casterbyte/Sara
-
-    [!] DISCLAIMER: Use this tool only for auditing your own devices.
-    [!] Unauthorized use on third-party systems is ILLEGAL.
-    [!] The author is not responsible for misuse.
-
-    WARNING: This tool is for security auditing of YOUR OWN RouterOS devices.
-    Unauthorized use may be illegal. Proceed responsibly.
-
-    Do you wish to proceed? [yes/no]: yes
-[*] Connecting to RouterOS at 192.168.88.1:22
-[*] Connection successful!
-========================================
-[*] Checking RouterOS Version
-[+] Detected RouterOS Version: 7.15.3
-[+] No known CVEs found for this version.
-========================================
-[*] Checking SMB Service
-[+] SMB is disabled. No risk detected.
-[+] No issues found.
-========================================
-[*] Checking RMI Services
-[!] ALERT: TELNET is ENABLED! This is a high security risk.
-    - Account passwords can be intercepted
-[!] ALERT: FTP is ENABLED! This is a high security risk.
-    - Are you sure you need FTP?
-[!] ALERT: HTTP is ENABLED! This is a high security risk.
-    - Account passwords can be intercepted
-[+] OK: SSH is enabled. Good!
-    - Are you using strong passwords and SSH keys for authentication?
-[!] CAUTION: HTTP-SSL is enabled.
-    - HTTPS detected. Ensure it uses a valid certificate and strong encryption.
-[!] CAUTION: API is enabled.
-    - RouterOS API is vulnerable to a bruteforce attack. If you need it, make sure you have access to it.
-[!] CAUTION: WINBOX is enabled.
-[!] CAUTION: If you're using 'Keep Password' in Winbox, your credentials may be stored in plaintext!
-    - If your PC is compromised, attackers can extract saved credentials.
-    - Consider disabling 'Keep Password' to improve security.
-[!] CAUTION: API-SSL is enabled.
-    - RouterOS API is vulnerable to a bruteforce attack. If you need it, make sure you have access to it.
-========================================
-[*] Checking Default Usernames
-[!] CAUTION: Default username 'admin' detected! Change it to a unique one.
-[!] CAUTION: Default username 'engineer' detected! Change it to a unique one.
-========================================
-[*] Checking network access to RMI
-[!] CAUTION: TELNET has no IP restriction set! Please restrict access.
-[!] CAUTION: FTP has no IP restriction set! Please restrict access.
-[!] CAUTION: WWW has no IP restriction set! Please restrict access.
-[+] OK! SSH is restricted to: 192.168.88.0/24
-[!] CAUTION: WWW-SSL has no IP restriction set! Please restrict access.
-[!] CAUTION: API has no IP restriction set! Please restrict access.
-[+] OK! WINBOX is restricted to: 192.168.88.0/24
-[!] CAUTION: API-SSL has no IP restriction set! Please restrict access.
-========================================
-[*] Checking Wi-Fi Security
-[+] All Wi-Fi interfaces and security profiles have secure settings.
-[*] If you use WPA-PSK or WPA2-PSK, take care of password strength. So that the handshake cannot be easily brute-forced.
-[+] No issues found.
-========================================
-[*] Checking UPnP Status
-[+] UPnP is disabled. No risk detected.
-[+] No issues found.
-========================================
-[*] Checking DNS Settings
-[!] CAUTION: Router is acting as a DNS server! This is just a warning. The DNS port on your RouterOS should not be on the external interface.
-========================================
-[*] Checking DDNS Settings
-[+] DDNS is disabled. No risk detected.
-[+] No issues found.
-========================================
-[*] Checking PoE Status
-[!] CAUTION: PoE is enabled on ether1. Ensure that connected devices support PoE to prevent damage.
-========================================
-[*] Checking RouterBOOT Protection
-[!] CAUTION: RouterBOOT protection is disabled! This can allow unauthorized firmware changes and password resets via Netinstall.
-========================================
-[*] Checking SOCKS Proxy Status
-[+] SOCKS proxy is disabled. No risk detected.
-[+] No issues found.
-========================================
-[*] Checking Bandwidth Server Status
-[+] Bandwidth server is disabled. No risk detected.
-[+] No issues found.
-========================================
-[*] Checking Neighbor Discovery Protocols
-[+] No security risks found in Neighbor Discovery Protocol settings.
-[+] No issues found.
-========================================
-[*] Checking Password Policy
-[!] CAUTION: No minimum password length is enforced! The length of the created passwords must be taken into account.
-========================================
-[*] Checking SSH Security
-[!] CAUTION: SSH Dynamic Port Forwarding is enabled! This could indicate a RouterOS compromise, and SSH DPF could also be used by an attacker as a pivoting technique.
-[!] CAUTION: strong-crypto is disabled! It is recommended to enable it to enhance security. This will:
-    - Use stronger encryption, HMAC algorithms, and larger DH primes;
-    - Prefer 256-bit encryption, disable null encryption, prefer SHA-256;
-    - Disable MD5, use 2048-bit prime for Diffie-Hellman exchange;
-========================================
-[*] Checking Connection Tracking
-[+] Connection Tracking is properly configured.
-[+] No issues found.
-========================================
-[*] Checking RoMON Status
-[+] RoMON is disabled. No risk detected.
-[+] No issues found.
-========================================
-[*] Checking Winbox MAC Server Settings
-[+] MAC Winbox are properly restricted.
-[+] MAC Telnet are properly restricted.
-[+] MAC Ping are properly restricted.
-========================================
-[*] Checking SNMP Community Strings
-[+] SNMP community strings checked. No weak values detected.
-[+] No issues found.
-========================================
-[*] Checking Firewall NAT Rules
-[+] No Destination NAT (dst-nat/netmap) rules detected. No risks found.
-[+] No issues found.
-========================================
-[*] Checking for Malicious Schedulers
-[*] Checking: 'Unknown' → 
-[+] No malicious schedulers detected.
-========================================
-[*] Checking Static DNS Entries
-[!] WARNING: The following static DNS entries exist:
-    - dc01.myownsummer.org → 192.168.88.71
-    - fake.example.com → 192.168.88.100
-[*] Were you the one who created those static DNS records? Make sure.
-[*] Attackers during RouterOS post-exploitation like to tamper with DNS record settings, for example, for phishing purposes.
-========================================
-[*] Checking Router Uptime
-[*] Router Uptime: 64 days, 2 hours, 23 minutes
-
-[*] Disconnected from RouterOS (192.168.88.1:22)
-[*] All checks have been completed. Security inspection completed in 3.03 seconds
-```
+8. `--skip-confirmation` - allows you to skip the audit start confirmation check. Use this if you really have permission to perform a security audit.
 
 # Copyright
 
