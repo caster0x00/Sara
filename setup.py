@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="sara",
     version="1.2",
-    url="https://github.com/casterbyte/Sara",
+    url="https://github.com/caster0x00/Sara",
     author="Magama Bazarov",
     author_email="magamabazarov@mailbox.org",
     scripts=['sara.py'],

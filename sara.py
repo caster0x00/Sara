@@ -28,7 +28,7 @@ def banner():
     print("    " + Fore.YELLOW + "Author: " + Style.RESET_ALL + "Magama Bazarov, <magamabazarov@mailbox.org>")
     print("    " + Fore.YELLOW + "Alias: " + Style.RESET_ALL + "Caster")
     print("    " + Fore.YELLOW + "Version: " + Style.RESET_ALL + "1.2")
-    print("    " + Fore.YELLOW + "Documentation & Usage: " + Style.RESET_ALL + "https://github.com/casterbyte/Sara\n")
+    print("    " + Fore.YELLOW + "Documentation & Usage: " + Style.RESET_ALL + "https://github.com/caster0x00/Sara\n")
 
     # Display a legal disclaimer to emphasize responsible usage
     print("    " + Fore.YELLOW + "[!] DISCLAIMER: Use this tool only for auditing your own devices.")

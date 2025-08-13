@@ -187,7 +187,7 @@ caster@kali:~$ sara -h
 
 ```bash
 ~$ sudo apt install git python3-colorama python3-netmiko python3-packaging
-~$ git clone https://github.com/casterbyte/Sara
+~$ git clone https://github.com/caster0x00/Sara
 ~$ cd Sara
 ~/Sara$ sudo python3 setup.py install
 ~$ sara -h
