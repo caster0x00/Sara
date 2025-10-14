@@ -7,7 +7,7 @@ RouterOS configuration analyzer to find security misconfigurations and vulnerabi
 ```
 RouterOS Security Inspector. Designed for security engineers
 
-Author: Magama Bazarov, <magamabazarov@mailbox.org>
+Author: Mahama Bazarov, <mahamabazarov@mailbox.org>
 Alias: Caster
 Version: 1.2
 ```
@@ -237,10 +237,10 @@ options:
 
 # Copyright
 
-Copyright (c) 2025 Magama Bazarov. This project is licensed under the Apache 2.0 License
+Copyright (c) 2025 Mahama Bazarov. This project is licensed under the Apache 2.0 License
 
 # Outro
 
 MikroTik devices are widely used around the world. Sara is designed to help engineers improve security - use it wisely.
 
-E-mail for contact: magamabazarov@mailbox.org
+E-mail for contact: mahamabazarov@mailbox.org

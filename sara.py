@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2025 Magama Bazarov
+# Copyright (c) 2025 Mahama Bazarov
 # Licensed under the Apache 2.0 License
 # This project is not affiliated with or endorsed by MikroTik
 
@@ -25,7 +25,7 @@ def banner():
     # Display the program banner and metadata
     print(banner_text)
     print("    " + Fore.YELLOW + "RouterOS Security Inspector. Designed for security engineers")
-    print("    " + Fore.YELLOW + "Author: " + Style.RESET_ALL + "Magama Bazarov, <magamabazarov@mailbox.org>")
+    print("    " + Fore.YELLOW + "Author: " + Style.RESET_ALL + "Mahama Bazarov, <mahamabazarov@mailbox.org>")
     print("    " + Fore.YELLOW + "Alias: " + Style.RESET_ALL + "Caster")
     print("    " + Fore.YELLOW + "Version: " + Style.RESET_ALL + "1.2")
     print("    " + Fore.YELLOW + "Documentation & Usage: " + Style.RESET_ALL + "https://github.com/caster0x00/Sara\n")
