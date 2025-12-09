@@ -201,8 +201,11 @@ system,protocols,wifi
 
 # Copyright
 
-Copyright (c) 2026 Mahama Bazarov. This project is licensed under the Apache 2.0 License.
+Copyright (c) 2026 Mahama Bazarov. 
+This project is licensed under the Apache 2.0 License.
+
 This project is not affiliated with or endorsed by SIA Mikrotīkls
+
 All MikroTik trademarks and product names are the property of their respective owners.
 
 # Outro
