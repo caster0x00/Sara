@@ -12,8 +12,8 @@ RouterOS security analyzer for detecting misconfigurations, weak settings, and k
     /____/\__,_/_/   \__,_/                              
 
     Sara: MikroTik RouterOS Security Inspector
-    Developer: Mahama Bazarov (Caster)
-    Contact: mahamabazarov@mailbox.org
+    Developer: Magama Bazarov (Caster)
+    Contact: magamabazarov@mailbox.org
     Version: 1.3.0
     Documentation & Usage: https://github.com/caster0x00/Sara
 ```
@@ -210,4 +210,4 @@ All MikroTik trademarks and product names are the property of their respective o
 
 # Outro
 
-If you have any suggestions or find any bugs, feel free to create issues in the repository or contact me: [mahamabazarov@mailbox.org](mailto:mahamabazarov@mailbox.org)
+If you have any suggestions or find any bugs, feel free to create issues in the repository or contact me: [magamabazarov@mailbox.org](mailto:magamabazarov@mailbox.org)
