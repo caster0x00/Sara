@@ -1,6 +1,6 @@
 # Auxiliary module cve_analyzer.py for searching CVE using the NIST NVD database
 #
-# Copyright (c) 2026 Magama Bazarov
+# Copyright (c) 2026 Mahama Bazarov
 # Licensed under the Apache 2.0 License
 # This project is not affiliated with or endorsed by SIA Mikrotīkls
 
