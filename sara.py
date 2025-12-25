@@ -33,8 +33,8 @@ def banner():
 """
     print(INDENT + banner_art)
     print(INDENT + "Sara: " + Style.RESET_ALL + "MikroTik RouterOS Security Inspector")
-    print(INDENT + "Developer: " + Style.RESET_ALL + "Magama Bazarov (Caster)")
-    print(INDENT + "Contact: " + Style.RESET_ALL + "magamabazarov@mailbox.org")
+    print(INDENT + "Developer: " + Style.RESET_ALL + "Mahama Bazarov (Caster)")
+    print(INDENT + "Contact: " + Style.RESET_ALL + "mahamabazarov@mailbox.org")
     print(INDENT + "Version: " + Style.RESET_ALL + "1.3.0")
     print(INDENT + "Documentation & Usage: " + Style.RESET_ALL + "https://github.com/caster0x00/Sara")
 
