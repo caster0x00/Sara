@@ -18,8 +18,6 @@ Use Sara only on networks and devices you own or have permission to test. The au
 Works on Unix-like systems and requires Python 3.9 or later. Sara does not need root, so a regular pipx installation is enough:
 
 ```
-sudo apt install pipx git
-pipx ensurepath
 pipx install git+https://github.com/ifritnoises/sara
 ```
 
@@ -43,6 +41,15 @@ The password is always asked interactively.
 ![](demo/sara_audit.gif)
 
 By default Sara uses `api-ssl` on port 8729. Routers usually have self-signed certificates, so the certificate is not verified, but the channel is still encrypted. Use `--port` for a non-standard port. `--plaintext` switches to the unencrypted `api` service on port 8728 and sends credentials in clear text.
+
+> [!WARNING]
+> By default `api-ssl` on RouterOS has no certificate and offers only anonymous TLS ciphers, which most distributions disable. Sara then retries with these ciphers and prints a warning: the channel is still encrypted, but the router identity is not verified. To avoid this, assign a certificate to `api-ssl`:
+>
+> ```
+> /certificate add name=api-ssl common-name=router key-usage=tls-server
+> /certificate sign api-ssl
+> /ip service set api-ssl certificate=api-ssl
+> ```
 
 Each finding shows the values read from the router, the impact and a RouterOS command to fix it. Checks that find nothing print nothing. Menus that do not exist on the device, such as Wi-Fi on a router without the package, are skipped.
 

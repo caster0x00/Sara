@@ -44,6 +44,11 @@ def ok(msg):
     print(Fore.GREEN + INDENT + f"[✓] {msg}")
 
 
+# warning line
+def warning(msg):
+    print(Fore.YELLOW + INDENT + f"[!] {msg}")
+
+
 # error line
 def error(msg):
     print(Fore.RED + INDENT + f"[-] {msg}")
