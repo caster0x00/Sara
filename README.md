@@ -18,6 +18,8 @@ Use Sara only on networks and devices you own or have permission to test. The au
 Works on Unix-like systems and requires Python 3.9 or later. Sara does not need root, so a regular pipx installation is enough:
 
 ```
+sudo apt install pipx git
+pipx ensurepath
 pipx install git+https://github.com/ifritnoises/sara
 ```
 
